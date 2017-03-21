@@ -1,14 +1,22 @@
+html, body, .box0, #box{
+    height: 100%
+}
+
 body{
     margin: 0px;
+    height: 100%
 }
+
 #box{
     direction:rtl;
     color: #333;
     line-height: 1.6;
     max-width: 700px;
+    height: 100%;
     padding-left: 20px;
     padding-right: 20px;
     margin-bottom: 64px;
+    overflow: auto;
 }
 
 #box, #header{

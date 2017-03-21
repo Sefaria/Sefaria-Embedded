@@ -1,0 +1,4 @@
+localhost:3018
+root ./public
+proxy /s localhost:3017/
+proxy /e localhost:3017/

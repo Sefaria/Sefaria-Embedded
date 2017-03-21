@@ -25,6 +25,8 @@ type SefariaAPIResult struct {
 	PristineURL            string
 }
 
+var db *bolt.DB
+
 // func (s SefariaAPIResult) MarshalBinary() ([]byte, error) {
 // 	buf := new(bytes.Buffer)
 // 	// for _, v := range s.HebrewText {
@@ -45,62 +47,72 @@ type SefariaAPIResult struct {
 
 // 	return buf.Bytes(), nil
 // }
-
-func main() {
-
-	db, err := initDB()
+func init() {
+	var err error
+	db, err = initDB()
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+func main() {
 
 	r := gin.Default()
 	r.LoadHTMLGlob("./templates/*")
-	r.Static("/assets/css", "./public/css")
-	r.Static("/assets/img", "./public/img")
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "search.tmpl", gin.H{})
-	})
-	r.POST("/s", func(c *gin.Context) {
-		var form SearchForm
-		c.Bind(&form)
-		url := buildSefariaGetURL(form.Searchterm)
-		fmt.Println(url)
-		result := sefariaGet(url)
-		result.PristineURL = form.Searchterm
-		id, err := putData(result, db)
-		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-		c.HTML(http.StatusOK, "result.tmpl", gin.H{
-			"text": result.HebrewText,
-			"uuid": id.String(),
-		})
-	})
+	// r.Static("/assets/css", "./public/css")
+	// r.Static("/assets/img", "./public/img")
+	// r.GET("/", func(c *gin.Context) {
+	// 	c.HTML(http.StatusOK, "search.tmpl", gin.H{})
+	// })
 
-	r.GET("/e/:id", func(c *gin.Context) {
-		idString := c.Param("id")
-		id, err := uuid.FromString(idString)
-		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-		result, err := getData(id, db)
-		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-		c.HTML(http.StatusOK, "embed.tmpl", gin.H{
-			"text":        result.HebrewText,
-			"secRef":      result.HebrewSectionReference,
-			"originalURL": result.PristineURL,
-			"uuid":        id.String(),
-		})
-	})
+	// api := r.Group("/api")
+	// {
+	// 	api.POST("/s", postSearch)
+	// 	api.GET("/e/:id", getEmbedPage)
+	// }
 
-	r.Run() // listen and serve on 0.0.0.0:8080
+	r.POST("/s", postSearch)
+	r.GET("/e/:id", getEmbedPage)
+
+	r.Run(":3017")
 }
 
+func postSearch(c *gin.Context) {
+	var form SearchForm
+	c.Bind(&form)
+	url := buildSefariaGetURL(form.Searchterm)
+	fmt.Println(url)
+	result := sefariaGet(url)
+	result.PristineURL = form.Searchterm
+	id, err := putData(result, db)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.HTML(http.StatusOK, "result.tmpl", gin.H{
+		"text": result.HebrewText,
+		"uuid": id.String(),
+	})
+}
+
+func getEmbedPage(c *gin.Context) {
+	idString := c.Param("id")
+	id, err := uuid.FromString(idString)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	result, err := getData(id, db)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.HTML(http.StatusOK, "embed.tmpl", gin.H{
+		"text":        result.HebrewText,
+		"secRef":      result.HebrewSectionReference,
+		"originalURL": result.PristineURL,
+		"uuid":        id.String(),
+	})
+}
 func initDB() (*bolt.DB, error) {
 	db, err := bolt.Open(CONFIG_DBNAME, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
