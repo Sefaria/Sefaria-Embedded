@@ -12,41 +12,16 @@ import (
 	"encoding/gob"
 
 	"github.com/boltdb/bolt"
-	"github.com/satori/go.uuid"
 	"gopkg.in/gin-gonic/gin.v1"
 )
 
-type SearchForm struct {
-	Searchterm string `form:"q" binding:"required"`
-}
 type SefariaAPIResult struct {
 	HebrewText             []string `json:"he" binding:"required"`
 	HebrewSectionReference string   `json:"heSectionRef" binding:"required"`
-	PristineURL            string
 }
 
 var db *bolt.DB
 
-// func (s SefariaAPIResult) MarshalBinary() ([]byte, error) {
-// 	buf := new(bytes.Buffer)
-// 	// for _, v := range s.HebrewText {
-// 	// 	err := binary.Write(buf, binary.LittleEndian, []byte(v))
-// 	// 	if err != nil {
-// 	// 		return nil, err
-// 	// 	}
-// 	// }
-// 	enc := gob.NewEncoder(buf)
-// 	err := enc.Encode(s.HebrewSectionReference)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	err = enc.Encode(s.HebrewText)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return buf.Bytes(), nil
-// }
 func init() {
 	var err error
 	db, err = initDB()
@@ -54,65 +29,33 @@ func init() {
 		log.Fatal(err)
 	}
 }
+
 func main() {
 
 	r := gin.Default()
 	r.LoadHTMLGlob("./templates/*")
-	// r.Static("/assets/css", "./public/css")
-	// r.Static("/assets/img", "./public/img")
-	// r.GET("/", func(c *gin.Context) {
-	// 	c.HTML(http.StatusOK, "search.tmpl", gin.H{})
-	// })
 
-	// api := r.Group("/api")
-	// {
-	// 	api.POST("/s", postSearch)
-	// 	api.GET("/e/:id", getEmbedPage)
-	// }
-
-	r.POST("/s", postSearch)
-	r.GET("/e/:id", getEmbedPage)
+	r.GET("/e/:resource", getEmbed)
 
 	r.Run(":3017")
 }
 
-func postSearch(c *gin.Context) {
-	var form SearchForm
-	c.Bind(&form)
-	url := buildSefariaGetURL(form.Searchterm)
-	fmt.Println(url)
-	result := sefariaGet(url)
-	result.PristineURL = form.Searchterm
-	id, err := putData(result, db)
+func getEmbed(c *gin.Context) {
+	idString := c.Param("resource")
+	url := buildSefariaGetURL(idString)
+	result, err := getData(url, db)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.HTML(http.StatusOK, "result.tmpl", gin.H{
-		"text": result.HebrewText,
-		"uuid": id.String(),
+
+	c.HTML(http.StatusOK, "embed.tmpl", gin.H{
+		"text":            result.HebrewText,
+		"secRef":          result.HebrewSectionReference,
+		"originalURLPath": idString,
 	})
 }
 
-func getEmbedPage(c *gin.Context) {
-	idString := c.Param("id")
-	id, err := uuid.FromString(idString)
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	result, err := getData(id, db)
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	c.HTML(http.StatusOK, "embed.tmpl", gin.H{
-		"text":        result.HebrewText,
-		"secRef":      result.HebrewSectionReference,
-		"originalURL": result.PristineURL,
-		"uuid":        id.String(),
-	})
-}
 func initDB() (*bolt.DB, error) {
 	db, err := bolt.Open(CONFIG_DBNAME, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
@@ -121,6 +64,15 @@ func initDB() (*bolt.DB, error) {
 
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(CONFIG_BUCKETNAME))
+
+		if err != nil {
+			return fmt.Errorf("Create bucket: %s", err)
+		}
+		return nil
+	})
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("integrated"))
 
 		if err != nil {
 			return fmt.Errorf("Create bucket: %s", err)
@@ -140,59 +92,68 @@ func buildSefariaGetURL(rawurl string) string {
 		panic(err)
 	}
 	fmt.Println(url)
-	url.Path = "/api/texts/" + url.Path
+	url.Host = "www.sefaria.org"
+	url.Scheme = "http"
+	url.Path = "api/texts/" + url.Path
 	return url.String()
 }
 
-func sefariaGet(url string) SefariaAPIResult {
+func sefariaGet(url string) (SefariaAPIResult, error) {
+	var m SefariaAPIResult
+
 	resp, err := http.Get(url)
 	if err != nil {
-		panic(err)
+		return m, err
 	}
-	decoder := json.NewDecoder(resp.Body)
 
-	var m SefariaAPIResult
+	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&m); err != nil {
-		panic(err)
+		return m, err
 	}
-	return m
+	return m, nil
 }
 
-func putData(data SefariaAPIResult, db *bolt.DB) (uuid.UUID, error) {
-	id := uuid.NewV4()
+func putData(key string, data SefariaAPIResult, db *bolt.DB) error {
 	err := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(CONFIG_BUCKETNAME))
+		b := tx.Bucket([]byte("integrated"))
 		buf := new(bytes.Buffer)
 		enc := gob.NewEncoder(buf)
 		err := enc.Encode(data)
 		if err != nil {
 			return err
 		}
-		err = b.Put(id.Bytes(), buf.Bytes())
-		return err
+		err = b.Put([]byte(key), buf.Bytes())
+		if err != nil {
+			return err
+		}
+		return nil
 	})
-	if err != nil {
-		return id, err
-	}
-	return id, nil
+	return err
 }
 
-func getData(id uuid.UUID, db *bolt.DB) (SefariaAPIResult, error) {
+func getData(key string, db *bolt.DB) (SefariaAPIResult, error) {
 	var data SefariaAPIResult
-
+	doesExist := false
+	//Check to see if it exists locally
 	err := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(CONFIG_BUCKETNAME))
-		result := b.Get(id.Bytes())
+		b := tx.Bucket([]byte("integrated"))
 
-		buf := bytes.NewBuffer(result)
-
-		dec := gob.NewDecoder(buf)
-		err := dec.Decode(&data)
-
-		return err
+		if result := b.Get([]byte(key)); result != nil {
+			doesExist = true
+			buf := bytes.NewBuffer(result)
+			dec := gob.NewDecoder(buf)
+			err := dec.Decode(&data)
+			return err
+		}
+		return nil
 	})
-	if err != nil {
-		return data, err
+
+	//If it doesn't, go ask Sefaria for it
+	if doesExist == false {
+		data, err = sefariaGet(key)
+
+		// And save it
+		putData(key, data, db)
 	}
-	return data, nil
+	return data, err
 }

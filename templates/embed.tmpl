@@ -22,7 +22,6 @@
             <div class="category-color-line"></div>
             <div class="box1">
                     <div id="box">
-                        <p class="embed-ref">Embedded version of {{.uuid}}</p>
                         {{ range $index, $elem:= .text }}
                             <p id="segment">
                             {{ $elem }}
@@ -33,7 +32,7 @@
         </div>
         <div id="footer">
             <div class="sefaria-ico-container">
-                <a href="{{.originalURL}}"> 
+                <a href="http://www.sefaria.org/{{.originalURL}}"> 
                     <img src="/img/favicon.ico" alt="בספריה">
                 </a>
             </div>
