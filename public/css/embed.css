@@ -2,6 +2,10 @@ html, body, .box0, #box{
     height: 100%
 }
 
+html, body{
+    overflow: hidden;
+}
+
 body{
     margin: 0px;
     height: 100%
