@@ -1,0 +1,85 @@
+body{
+    margin: 0px;
+}
+#box{
+    direction:rtl;
+    color: #333;
+    line-height: 1.6;
+    max-width: 700px;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-bottom: 64px;
+}
+
+#box, #header{
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#header{
+    border-bottom: 1px solid #ccc;
+    height: 54px;
+    line-height: 54px;
+        text-align: center;
+}
+
+
+.sefaria-svg-container{
+    max-width: 102px;
+    margin: auto;
+    height: 54px;
+    line-height: 54px;
+    
+}
+
+.col{
+    display: inline-block;
+}
+
+.sefaria-svg-container .sefaria-svg{
+    padding-top: 16px;    
+    height: 22px;
+}
+
+.section-ref-header{
+    border-left: 1px solid #ddd;
+    background-color: #F9F9F7;
+    text-align: center;
+}
+.category-color-line{
+    height: 6px;
+    background-color: rgb(0, 78, 95);
+}
+.embed-ref{
+    margin: 0px;
+}
+
+#segment{
+    font-size: 1.4em;
+    font-weight: 500;
+}
+
+#footer {
+    position:fixed;
+    left:0px;
+    bottom:0px;
+    height:44px;
+    width:100%;
+    border-top: 1px solid #ddd;
+    
+    /*background-color: rgb(0, 78, 95);*/
+    background-color:  #F9F9F7;
+}
+
+.sefaria-ico-container{
+    max-width: 48px;
+    margin-left: auto;
+}
+
+.sefaria-ico-container img{
+    padding-top: 5px;
+    height: 34px;
+}
+
+
+

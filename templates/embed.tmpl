@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <link rel="icon" type="image/ico" href="/assets/img/favicon.ico">
+        <link rel="stylesheet" href="/assets/css/embed.css">
+        <link rel="stylesheet" href="/assets/css/pure_base+grid.css">
+    </head>
+    <body>
+        <div id="header">
+            <div class="pure-g">
+                <div class="pure-u-1-2">
+                    <div class="sefaria-svg-container">
+                        <img class="sefaria-svg" src="/assets/img/sefaria.svg" alt="Sefaria logo">
+                    </div>
+                </div>
+                <div class="pure-u-1-2">
+                    <div class="section-ref-header">{{.secRef}}</div>
+                </div>
+            </div>
+            
+        </div>
+        <div class="box0">
+            <div class="category-color-line"></div>
+            <div id="box">
+                <p class="embed-ref">Embedded version of {{.uuid}}</p>
+                {{ range $index, $elem:= .text }}
+                    <p id="segment">
+                    {{ $elem }}
+                    </p>
+                {{ end }}
+            </div>
+        </div>
+        <div id="footer">
+            <div class="sefaria-ico-container">
+                <a href="{{.originalURL}}"> 
+                    <img src="/assets/img/favicon.ico" alt="בספריה">
+                </a>
+            </div>
+        </div>
+    </body>
+</html>
