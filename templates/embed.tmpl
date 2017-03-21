@@ -20,13 +20,15 @@
         </div>
         <div class="box0">
             <div class="category-color-line"></div>
-            <div id="box">
-                <p class="embed-ref">Embedded version of {{.uuid}}</p>
-                {{ range $index, $elem:= .text }}
-                    <p id="segment">
-                    {{ $elem }}
-                    </p>
-                {{ end }}
+            <div class="box1">
+                    <div id="box">
+                        <p class="embed-ref">Embedded version of {{.uuid}}</p>
+                        {{ range $index, $elem:= .text }}
+                            <p id="segment">
+                            {{ $elem }}
+                            </p>
+                        {{ end }}
+                    </div>
             </div>
         </div>
         <div id="footer">
