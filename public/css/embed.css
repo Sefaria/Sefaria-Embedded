@@ -56,8 +56,10 @@ body{
 
 .languageToggle {
     position: absolute;
-    top:10;
+    top:0;
     right: 0;
+    margin-top: 10px;
+    margin-right: 9px;
     color: #ccc;
     display: block;
     width: 38px;
