@@ -11,13 +11,17 @@ import (
 
 	"encoding/gob"
 
+	"strings"
+
 	"github.com/boltdb/bolt"
 	"gopkg.in/gin-gonic/gin.v1"
 )
 
 type SefariaAPIResult struct {
-	HebrewText             []string `json:"he" binding:"required"`
-	HebrewSectionReference string   `json:"heSectionRef" binding:"required"`
+	HebrewText              []string `json:"he" binding:"required"`
+	EnglishText             []string `json:"text" binding:"required"`
+	HebrewSectionReference  string   `json:"heSectionRef" binding:"required"`
+	EnglishSectionReference string   `json:"sectionRef" binding:"required"`
 }
 
 var db *bolt.DB
@@ -44,15 +48,19 @@ func getEmbed(c *gin.Context) {
 	idString := c.Param("resource")
 	url := buildSefariaGetURL(idString)
 	result, err := getData(url, db)
+
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	c.HTML(http.StatusOK, "embed.tmpl", gin.H{
-		"text":            result.HebrewText,
-		"secRef":          result.HebrewSectionReference,
-		"originalURLPath": idString,
+		"defaultLanguageCode": "he",
+		"textHebrew":          result.HebrewText,
+		"textEnglish":         result.EnglishText,
+		"secRefHebrew":        result.HebrewSectionReference,
+		"secRefEnglish":       result.EnglishSectionReference,
+		"originalURLPath":     idString,
 	})
 }
 
@@ -110,7 +118,19 @@ func sefariaGet(url string) (SefariaAPIResult, error) {
 	if err := decoder.Decode(&m); err != nil {
 		return m, err
 	}
+	m.Sanitize()
 	return m, nil
+}
+
+//Sanitize removes certain patterns known to be in the data
+//that are problematic. Sanitize should be called when pulling
+//in new data from the Sefaria API.
+func (r SefariaAPIResult) Sanitize() {
+	//First known case of sanitization is removing the <i></i>
+	//tags from within the english text data
+	for i := range r.EnglishText {
+		r.EnglishText[i] = strings.Replace(r.EnglishText[i], "<i></i>", "", -1)
+	}
 }
 
 func putData(key string, data SefariaAPIResult, db *bolt.DB) error {

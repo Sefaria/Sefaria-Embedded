@@ -1,8 +1,8 @@
 <html>
-    <head>
+    <head data-languageCode="{{.defaultLanguageCode}}">
         <link rel="icon" type="image/ico" href="/img/favicon.ico">
-        <link rel="stylesheet" href="/css/embed.css">
         <link rel="stylesheet" href="/css/pure_base+grid.css">
+        <link rel="stylesheet" href="/css/embed.css">
     </head>
     <body>
         <div id="header">
@@ -13,7 +13,14 @@
                     </div>
                 </div>
                 <div class="pure-u-1-2">
-                    <div class="section-ref-header">{{.secRef}}</div>
+                    <div class="section-ref-header">
+                        <div class="en" {{if eq .defaultLanguageCode "he"}}hidden{{end}}>{{.secRefEnglish}}</div>
+                        <div class="he" {{if eq .defaultLanguageCode "en"}}hidden{{end}}>{{.secRefHebrew}}</div>
+                    </div>
+                    <div class="languageToggle">
+                        <span class="en" {{if eq .defaultLanguageCode "he"}}hidden{{end}}><img src="/img/aleph.svg" alt="א"></span>
+                        <span class="he" {{if eq .defaultLanguageCode "en"}}hidden{{end}}><img src="/img/aye.svg" alt="A"></span>
+                    </div>
                 </div>
             </div>
             
@@ -21,12 +28,21 @@
         <div class="box0">
             <div class="category-color-line"></div>
             <div class="box1">
-                    <div id="box">
-                        {{ range $index, $elem:= .text }}
-                            <p id="segment">
-                            {{ $elem }}
-                            </p>
-                        {{ end }}
+                    <div class="box">
+                        <div class="en"  {{if eq .defaultLanguageCode "he"}}hidden{{end}}>
+                            {{ range $index, $elem:= .textEnglish }}
+                                <p id="segment">
+                                {{ $elem }}
+                                </p>
+                            {{ end }}
+                        </div>
+                        <div class="he"  {{if eq .defaultLanguageCode "en"}}hidden{{end}}>
+                            {{ range $index, $elem:= .textHebrew }}
+                                <p id="segment">
+                                {{ $elem }}
+                                </p>
+                            {{ end }}
+                        </div>
                     </div>
             </div>
         </div>
@@ -38,4 +54,6 @@
             </div>
         </div>
     </body>
+<script type="text/javascript" src="/javascript/embed.js"></script>
+    
 </html>
