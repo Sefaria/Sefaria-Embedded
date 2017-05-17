@@ -24,6 +24,11 @@ type SefariaAPIResult struct {
 	EnglishSectionReference string   `json:"sectionRef" binding:"required"`
 }
 
+type SefariaResource struct {
+	Resource    SefariaAPIResult
+	LastTouched time.Time
+}
+
 var db *bolt.DB
 
 func init() {
@@ -35,7 +40,7 @@ func init() {
 }
 
 func main() {
-
+	go cacheManager()
 	r := gin.Default()
 	r.LoadHTMLGlob("./templates/*")
 
@@ -56,10 +61,10 @@ func getEmbed(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "embed.tmpl", gin.H{
 		"defaultLanguageCode": "he",
-		"textHebrew":          result.HebrewText,
-		"textEnglish":         result.EnglishText,
-		"secRefHebrew":        result.HebrewSectionReference,
-		"secRefEnglish":       result.EnglishSectionReference,
+		"textHebrew":          result.Resource.HebrewText,
+		"textEnglish":         result.Resource.EnglishText,
+		"secRefHebrew":        result.Resource.HebrewSectionReference,
+		"secRefEnglish":       result.Resource.EnglishSectionReference,
 		"originalURLPath":     idString,
 	})
 }
@@ -133,7 +138,7 @@ func (r SefariaAPIResult) Sanitize() {
 	}
 }
 
-func putData(key string, data SefariaAPIResult, db *bolt.DB) error {
+func putData(key string, data SefariaResource, db *bolt.DB) error {
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("integrated"))
 		buf := new(bytes.Buffer)
@@ -151,29 +156,51 @@ func putData(key string, data SefariaAPIResult, db *bolt.DB) error {
 	return err
 }
 
-func getData(key string, db *bolt.DB) (SefariaAPIResult, error) {
-	var data SefariaAPIResult
+func getData(key string, db *bolt.DB) (SefariaResource, error) {
+	var data SefariaResource
 	doesExist := false
 	//Check to see if it exists locally
-	err := db.View(func(tx *bolt.Tx) error {
+	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("integrated"))
 
 		if result := b.Get([]byte(key)); result != nil {
 			doesExist = true
+
 			buf := bytes.NewBuffer(result)
 			dec := gob.NewDecoder(buf)
 			err := dec.Decode(&data)
+
+			data.LastTouched = time.Now()
+
+			buf = new(bytes.Buffer)
+			enc := gob.NewEncoder(buf)
+			err = enc.Encode(data)
+			if err != nil {
+				return err
+			}
+			err = b.Put([]byte(key), buf.Bytes())
 			return err
 		}
 		return nil
 	})
 
+	if err != nil {
+		return data, err
+	}
+
 	//If it doesn't, go ask Sefaria for it
 	if doesExist == false {
-		data, err = sefariaGet(key)
+		apidata, err := sefariaGet(key)
+		if err != nil {
+			return data, err
+		}
+		data = SefariaResource{
+			apidata,
+			time.Now(),
+		}
 
 		// And save it
 		putData(key, data, db)
 	}
-	return data, err
+	return data, nil
 }
