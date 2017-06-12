@@ -70,7 +70,7 @@ func getEmbed(c *gin.Context) {
 }
 
 func initDB() (*bolt.DB, error) {
-	db, err := bolt.Open(CONFIG_DBNAME, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	db, err := bolt.Open(CONFIG_DB_FILE_NAME, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		return nil, err
 	}
