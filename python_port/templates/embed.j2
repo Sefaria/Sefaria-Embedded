@@ -1,0 +1,59 @@
+<html>
+    <head data-languageCode="{{ ob.defaultLanguageCode }}">
+        <link rel="icon" type="image/ico" href="/img/favicon.ico">
+        <link rel="stylesheet" href="/css/pure_base+grid.css">
+        <link rel="stylesheet" href="/css/embed.css">
+    </head>
+    <body>
+        <div id="header">
+            <div class="pure-g">
+                <div class="pure-u-1-2">
+                    <div class="sefaria-svg-container">
+                        <img class="sefaria-svg" src="/img/sefaria.svg" alt="Sefaria logo">
+                    </div>
+                </div>
+                <div class="pure-u-1-2">
+                    <div class="section-ref-header">
+                        <div class="en" {%if ob.defaultLanguageCode == "he" %}hidden{% endif %}>{{ob.EnglishSectionReference}}</div>
+                        <div class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>{{ob.HebrewSectionReference}}</div>
+                    </div>
+                    <div class="languageToggle">
+                        <span class="en" {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}><img src="/img/aleph.svg" alt="א"></span>
+                        <span class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}><img src="/img/aye.svg" alt="A"></span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <div class="box0">
+            <div class="category-color-line"></div>
+            <div class="box1">
+                    <div class="box">
+                        <div class="en"  {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}>
+                            {% for elem in ob.EnglishText %}
+                                <p id="segment">
+                                {{ elem }}
+                                </p>
+                            {% endfor %}
+                        </div>
+                        <div class="he"  {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>
+                            {% for elem in ob.HebrewText %}
+                                <p id="segment">
+                                {{ elem }}
+                                </p>
+                            {% endfor %}
+                        </div>
+                    </div>
+            </div>
+        </div>
+        <div id="footer">
+            <div class="sefaria-ico-container">
+                <a href="http://www.sefaria.org/{{ob.originalURLPath}}" target="_blank"> 
+                    <img src="/img/favicon.ico" alt="בספריה">
+                </a>
+            </div>
+        </div>
+    </body>
+<script type="text/javascript" src="/javascript/embed.js"></script>
+    
+</html>

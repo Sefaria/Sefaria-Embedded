@@ -29,3 +29,12 @@ _testmain.go
 #bolt db lock files
 *.db.lock
 
+#caddy log files
+access.log
+
+###Python stuff
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
