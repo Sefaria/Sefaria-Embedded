@@ -14,8 +14,8 @@
                 </div>
                 <div class="pure-u-1-2">
                     <div class="section-ref-header">
-                        <div class="en" {%if ob.defaultLanguageCode == "he" %}hidden{% endif %}>{{ob.EnglishSectionReference}}</div>
-                        <div class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>{{ob.HebrewSectionReference}}</div>
+                        <div class="en" {%if ob.defaultLanguageCode == "he" %}hidden{% endif %}>{{ob.data.EnglishSectionReference}}</div>
+                        <div class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>{{ob.data.HebrewSectionReference}}</div>
                     </div>
                     <div class="languageToggle">
                         <span class="en" {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}><img src="/img/aleph.svg" alt="א"></span>
@@ -30,14 +30,14 @@
             <div class="box1">
                     <div class="box">
                         <div class="en"  {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}>
-                            {% for elem in ob.EnglishText %}
+                            {% for elem in ob.data.EnglishText %}
                                 <p id="segment">
                                 {{ elem }}
                                 </p>
                             {% endfor %}
                         </div>
                         <div class="he"  {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>
-                            {% for elem in ob.HebrewText %}
+                            {% for elem in ob.data.HebrewText %}
                                 <p id="segment">
                                 {{ elem }}
                                 </p>

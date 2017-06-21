@@ -5,6 +5,7 @@ from urlparse import urljoin
 from time import time
 
 from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -25,15 +26,24 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 Base = declarative_base()
-Base.metadata.create_all(engine)
 
 class SefariaResource(Base):
     __tablename__ = 'sefaria_resources'
     id = Column(Integer, primary_key=True)
-    HebrewText = Column(String)
-    EnglishText = Column(String)
     HebrewSectionReference = Column(String)
     EnglishSectionReference = Column(String)
+
+
+class ResourceTextSection(Base):
+    __tablename__ = 'resource_text_arrays'
+    id = Column(Integer, primary_key=True)
+    resource_id = Column(Integer, ForeignKey("sefaria_resources.id"), nullable=False)
+    language_code = Column(String)
+    text_index = Column(Integer) 
+    text = Column(String)
+
+Base.metadata.create_all(engine)
+# session.commit()
 
 # Web App
 app = Flask(__name__)
@@ -41,67 +51,104 @@ app = Flask(__name__)
 @app.route("/<resource>")
 def root(resource):
     """Returns the embed page for a given Sefaria resource"""
-    try:
-        # result = get_resource(resource)
-        # return result
-        return "Hello"
-    except:
-        e = sys.exc_info()[0]
-        print e
-        return "There was an Error" 
-    # result["defaultLanguageCode"] = "he"
-    # result["originalURLPath"] = resource
-    # return render_template("embed.j2", ob=result)
+    result = get_resource(resource)
+    render_obj = {}
 
+    render_obj["defaultLanguageCode"] = "he"
+    render_obj["originalURLPath"] = resource
+    render_obj["data"] = result
+
+    return render_template("embed.j2", ob=render_obj)
+
+
+# render_obj["error_code"] = 500
+# render_obj["error_message"] = result
+# return render_template("error.j2", ob=render_obj)
 
 def get_resource(resource_name):
     """Looks for the Sefaria resource locally, otherwise fetches it from the api"""
     #Check if it exists locally
-    # result = local_get_resource("fake_resource")
+    result = local_get_resource(resource_name)
 
-    # return result
+    if result is None:  #If it does not exist locally, get it from the api
+        print "Result not found locally. Fetching from API..."
+        result = remote_get_resource(resource_name)
 
-    #If it does not exist locally, get it from the api
-    result = fetch_resource(resource_name)
     return result
 
 # Remote resource function
-def fetch_resource(resource_name):
+def remote_get_resource(resource_name):
     """Issues a GET request to fetch resource and returns dictionary of the relevant data"""
-    # url = urljoin(SEFARIA_API_NODE, resource_name)
-    print resource_name
-    # response = requests.get(url)
-    # response = requests.get(urljoin(SEFARIA_API_NODE, resource_name))
-    # response.encoding = "UTF-8"
-    # full_json = response.json()
+    url = urljoin(SEFARIA_API_NODE, resource_name)
+
+    response = requests.get(url)
+    response = requests.get(urljoin(SEFARIA_API_NODE, resource_name))
+    response.encoding = "UTF-8"
+    full_json = response.json()
 
     # Parse the relevant parts of the json
     parsed_response = {}
-    # parsed_response["HebrewText"] = full_json["he"]
-    # parsed_response["EnglishText"] = full_json["text"]
-    # parsed_response["HebrewSectionReference"] = full_json["heSectionRef"]
-    # parsed_response["EnglishSectionReference"] = full_json["sectionRef"]
+    parsed_response["HebrewText"] = full_json["he"]
+    parsed_response["EnglishText"] = full_json["text"]
+    parsed_response["HebrewSectionReference"] = full_json["heSectionRef"]
+    parsed_response["EnglishSectionReference"] = resource_name
 
+    # Add the resource to the local data store
+    local_add_resource(parsed_response)
+
+    # Pass the resource back to the web app
     return parsed_response
 
 def local_get_resource(resource_hebrew_section_reference):
-    print resource_hebrew_section_reference
-    resource = session.query(SefariaResource).filter_by(HebrewSectionReference=resource_hebrew_section_reference).first()
-    print "Resource: "+ resource
-    return resource
-def local_add_resource(resource_dict):
-    resource = SefariaResource(
-        HebrewText=resource_dict["HebrewText"],
-        EnglishText=resource_dict["EnglishText"],
-        HebrewSectionReference=resource_dict["HebrewSectionReference"],
-        EnglishSectionReference=resource_dict["EnglishSectionReference"])
+    resource = session.query(SefariaResource).filter_by(EnglishSectionReference=resource_hebrew_section_reference).first()
 
+    if resource is None:
+        return resource
+
+    english_text_array = [] 
+    for row in session.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="en").order_by(ResourceTextSection.text_index):
+        english_text_array.append(row.text)
+    
+
+    hebrew_text_array = []
+    for row in session.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="he").order_by(ResourceTextSection.text_index):
+        hebrew_text_array.append(row.text)
+
+    result = {}
+    result["HebrewText"] = hebrew_text_array
+    result["EnglishText"] = english_text_array
+    result["HebrewSectionReference"] = resource.HebrewSectionReference
+    result["EnglishSectionReference"] = resource.EnglishSectionReference
+    return result
+
+def local_add_resource(resource_dict):
+    resource = SefariaResource(HebrewSectionReference=resource_dict["HebrewSectionReference"], EnglishSectionReference=resource_dict["EnglishSectionReference"])
     session.add(resource)
+    session.flush() #To make sure the id is assigned for future foreign key reference
+
+    # add all of the section text in seperate table
+    hebrew_text_index = 0
+    for text in resource_dict["HebrewText"]:
+        hebrew_text_index += 1
+        text_section = ResourceTextSection(
+            resource_id=resource.id,
+            language_code="he",
+            text_index=hebrew_text_index,
+            text=text)
+        session.add(text_section)
+
+    english_text_index = 0
+    for text in resource_dict["EnglishText"]:
+        english_text_index += 1
+        text_section = ResourceTextSection(
+            resource_id=resource.id,
+            language_code="en",
+            text_index=english_text_index,
+            text=text)
+        session.add(text_section)
+
     session.commit()
-    # HebrewText = Column(String)
-    # EnglishText = Column(String)
-    # HebrewSectionReference = Column(String)
-    # EnglishSectionReference = Column(String)
+    return
 
 if __name__ == "__main__":
     app.run(port=3017)
