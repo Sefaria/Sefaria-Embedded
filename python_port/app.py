@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """An embed server for Sefaria.org"""
 import sys
 import time
@@ -15,6 +16,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from flask import Flask, render_template, request
 
 from constants import *
+from gematriya import getGematriyaOfNumber
 import requests
 
 
@@ -46,6 +48,7 @@ class ResourceTextSection(Base):
     resource_id = Column(Integer, ForeignKey("sefaria_resources.id"), nullable=False)
     language_code = Column(String)
     text_index = Column(Integer) 
+    text_index_char = Column(String) 
     text = Column(String)
 
 Base.metadata.create_all(engine)
@@ -63,13 +66,13 @@ def root(resource):
     lang = request.args.get('lang')
     if lang == 'he':
         render_obj["defaultLanguageCode"] = "he"
-        render_obj["meta_description"] = get_first_50_characters(result["HebrewText"])
+        render_obj["meta_description"] = get_first_50_characters(result["HebrewText"][1])
     elif lang == 'en':
         render_obj["defaultLanguageCode"] = "en"
-        render_obj["meta_description"] = get_first_50_characters(result["EnglishText"])
+        render_obj["meta_description"] = get_first_50_characters(result["EnglishText"][1])
     else:
         render_obj["defaultLanguageCode"] = "en"
-        render_obj["meta_description"] = get_first_50_characters(result["EnglishText"])
+        render_obj["meta_description"] = get_first_50_characters(result["EnglishText"][1])
 
     render_obj["originalURLPath"] = resource
     render_obj["data"] = result
@@ -111,10 +114,10 @@ def remote_get_resource(resource_name):
     parsed_response["resource_name"] = resource_name
 
     # Add the resource to the local data store
-    local_add_resource(parsed_response)
+    result = local_add_resource(parsed_response)
 
     # Pass the resource back to the web app
-    return parsed_response
+    return result
 
 def local_get_resource(resource_name):
     resource = session.query(SefariaResource).filter_by(resource_name=resource_name).first()
@@ -122,21 +125,20 @@ def local_get_resource(resource_name):
     if resource is None:
         return resource
 
-    english_text_array = [] 
+    english_array = [] 
     for row in session.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="en").order_by(ResourceTextSection.text_index):
-        english_text_array.append(row.text)
-    
+        english_array.append([row.text_index_char,row.text])
 
-    hebrew_text_array = []
+    hebrew_array = []
     for row in session.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="he").order_by(ResourceTextSection.text_index):
-        hebrew_text_array.append(row.text)
+        hebrew_array.append([row.text_index_char,row.text])
 
     # Update the counter of how many times this resource has been seen
     resource.seen_count += 1
 
     result = {}
-    result["HebrewText"] = hebrew_text_array
-    result["EnglishText"] = english_text_array
+    result["HebrewText"] = hebrew_array
+    result["EnglishText"] = english_array
     result["HebrewSectionReference"] = resource.HebrewSectionReference
     result["EnglishSectionReference"] = resource.EnglishSectionReference
 
@@ -155,10 +157,12 @@ def local_add_resource(resource_dict):
     hebrew_text_index = 0
     for text in resource_dict["HebrewText"]:
         hebrew_text_index += 1
+        hebrew_char = getGematriyaOfNumber(hebrew_text_index)
         text_section = ResourceTextSection(
             resource_id=resource.id,
             language_code="he",
             text_index=hebrew_text_index,
+            text_index_char=hebrew_char,
             text=text)
         session.add(text_section)
 
@@ -169,6 +173,7 @@ def local_add_resource(resource_dict):
             resource_id=resource.id,
             language_code="en",
             text_index=english_text_index,
+            text_index_char=english_text_index,
             text=text)
         session.add(text_section)
 

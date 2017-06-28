@@ -41,18 +41,36 @@
             <div class="box1">
                     <div class="box">
                         <div class="en"  {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}>
+                            <div class="pure-g">
                             {% for elem in ob.data.EnglishText %}
-                                <p id="segment">
-                                {{ elem }}
-                                </p>
+                                <div class="pure-u-1-24">
+                                    <p id="segment">
+                                    1
+                                    </p>
+                                </div>
+                                <div class="pure-u-23-24">
+                                    <p id="segment">
+                                    {{ elem }}
+                                    </p>
+                                </div>
                             {% endfor %}
+                            </div> 
                         </div>
                         <div class="he"  {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>
+                            <div class="pure-g">
                             {% for elem in ob.data.HebrewText %}
-                                <p id="segment">
-                                {{ elem }}
-                                </p>
+                                <div class="pure-u-1-24">
+                                    <p id="segment">
+                                    1
+                                    </p>
+                                </div>
+                                <div class="pure-u-23-24">
+                                    <p id="segment">
+                                    {{ elem }}
+                                    </p>
+                                </div>
                             {% endfor %}
+                            </div> 
                         </div>
                     </div>
             </div>
