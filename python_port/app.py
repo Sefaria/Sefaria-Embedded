@@ -1,16 +1,21 @@
 """An embed server for Sefaria.org"""
 import sys
+import time
 from threading import Thread
 from urlparse import urljoin
-from time import time
+from threading import Thread
+from datetime import datetime
 
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy.sql import func
 from sqlalchemy.schema import ForeignKey
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
 from flask import Flask
 from flask import render_template
+
+
 
 from constants import *
 import requests
@@ -18,7 +23,8 @@ import requests
 
 #Database
 engine = create_engine('sqlite:///test.db', echo=False)
-Session = sessionmaker(bind=engine)
+session_factory = sessionmaker(bind=engine)
+Session = scoped_session(session_factory)
 # Or do:
 # Session = sessionmaker()
 # Session.configure(bind=engine)  # once engine is available
@@ -32,7 +38,9 @@ class SefariaResource(Base):
     id = Column(Integer, primary_key=True)
     HebrewSectionReference = Column(String)
     EnglishSectionReference = Column(String)
-
+    seen_count = Column(Integer, default=1)
+    created_timestamp = Column(DateTime, server_default=func.now())
+    last_seen_timestamp = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class ResourceTextSection(Base):
     __tablename__ = 'resource_text_arrays'
@@ -114,11 +122,16 @@ def local_get_resource(resource_hebrew_section_reference):
     for row in session.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="he").order_by(ResourceTextSection.text_index):
         hebrew_text_array.append(row.text)
 
+    # Update the counter of how many times this resource has been seen
+    resource.seen_count += 1
+
     result = {}
     result["HebrewText"] = hebrew_text_array
     result["EnglishText"] = english_text_array
     result["HebrewSectionReference"] = resource.HebrewSectionReference
     result["EnglishSectionReference"] = resource.EnglishSectionReference
+
+    session.commit()
     return result
 
 def local_add_resource(resource_dict):
@@ -150,5 +163,34 @@ def local_add_resource(resource_dict):
     session.commit()
     return
 
+def local_monitor_resources(delay):
+    session2 = Session()
+
+    while True:
+        for resource in session2.query(SefariaResource):
+            seconds_old = (datetime.utcnow() - resource.last_seen_timestamp).total_seconds()
+            if seconds_old > CACHE_LIFETIME_SECONDS:
+                print "Deleting " + resource.EnglishSectionReference + " which is " + str(seconds_old) + " seconds old"
+                local_delete_resource(session2, resource.EnglishSectionReference)
+        time.sleep(delay)
+
+def local_delete_resource(session2, resource_english_section_reference):
+    resource = session2.query(SefariaResource).filter_by(EnglishSectionReference=resource_english_section_reference).first()
+
+    if resource is None:
+        return resource
+
+    for row in session2.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="en").order_by(ResourceTextSection.text_index):
+        session2.delete(row)
+
+    for row in session2.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="he").order_by(ResourceTextSection.text_index):
+        session2.delete(row)
+
+    session2.delete(resource)
+
+    session2.commit()
+
+
 if __name__ == "__main__":
+    Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
     app.run(port=3017)
