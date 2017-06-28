@@ -1,5 +1,16 @@
 <html>
     <head data-languageCode="{{ ob.defaultLanguageCode }}">
+        {%if ob.defaultLanguageCode == "en" %}
+        <title>{{ob.data.EnglishSectionReference}}</title>
+         <meta property="og:title" content="{{ob.data.EnglishSectionReference}}" />
+        {% endif %}
+        {%if ob.defaultLanguageCode == "he" %}
+        <title>{{ob.data.HebrewSectionReference}}</title>
+         <meta property="og:title" content="{{ob.data.HebrewSectionReference}}" />
+        {% endif %}
+        <meta name="description" content="{{ob.meta_description}}" />
+        <meta property="og:description" content="{{ob.meta_description}}" />
+        <meta property="og:image" content="/img/ogimage.png" />
         <link rel="icon" type="image/ico" href="/img/favicon.ico">
         <link rel="stylesheet" href="/css/pure_base+grid.css">
         <link rel="stylesheet" href="/css/embed.css">
