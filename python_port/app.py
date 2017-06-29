@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """An embed server for Sefaria.org"""
 import sys
 import time
@@ -14,9 +15,10 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from flask import Flask, render_template, request
 
-from constants import *
 import requests
 
+from constants import *
+from gematriya import getGematriyaOfNumber
 
 #Database
 engine = create_engine('sqlite:///test.db', echo=False)
@@ -57,25 +59,41 @@ app = Flask(__name__)
 @app.route("/<resource>")
 def root(resource):
     """Returns the embed page for a given Sefaria resource"""
-    result = get_resource(resource)
-    render_obj = {}
-
     lang = request.args.get('lang')
+
+    result = get_resource(resource)
+    result = format_resource_for_view(result, lang)
+
+    return render_template("embed.j2", ob=result)
+
+
+def format_resource_for_view(resource, lang):
+    """format_resource_for_view receives a resource that was received from the database
+    and modifies it to the proper format needed for view rendering"""
+
+    # Add line numbers
+    resource["hebrew_data"] = [[getGematriyaOfNumber(i + 1), resource["HebrewText"][i]]
+                               for i in range(len(resource["HebrewText"]))]
+
+    resource["english_data"] = [[i + 1, resource["EnglishText"][i]]
+                                for i in range(len(resource["EnglishText"]))]
+
     if lang == 'he':
-        render_obj["defaultLanguageCode"] = "he"
-        render_obj["meta_description"] = get_first_50_characters(result["HebrewText"])
+        resource["defaultLanguageCode"] = "he"
+        resource["meta_description"] = get_first_50_characters(resource["HebrewText"])
     elif lang == 'en':
-        render_obj["defaultLanguageCode"] = "en"
-        render_obj["meta_description"] = get_first_50_characters(result["EnglishText"])
+        resource["defaultLanguageCode"] = "en"
+        resource["meta_description"] = get_first_50_characters(resource["EnglishText"])
     else:
-        render_obj["defaultLanguageCode"] = "en"
-        render_obj["meta_description"] = get_first_50_characters(result["EnglishText"])
+        resource["defaultLanguageCode"] = "en"
+        resource["meta_description"] = get_first_50_characters(resource["EnglishText"])
 
-    render_obj["originalURLPath"] = resource
-    render_obj["data"] = result
+    resource["originalURLPath"] = resource
 
-    return render_template("embed.j2", ob=render_obj)
+    del resource["HebrewText"]
+    del resource["EnglishText"]
 
+    return resource
 
 # render_obj["error_code"] = 500
 # render_obj["error_message"] = result
@@ -102,6 +120,7 @@ def remote_get_resource(resource_name):
     response.encoding = "UTF-8"
     full_json = response.json()
 
+    del full_json["commentary"]
     # Parse the relevant parts of the json
     parsed_response = {}
     parsed_response["HebrewText"] = full_json["he"]

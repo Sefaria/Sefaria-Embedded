@@ -1,12 +1,12 @@
 <html>
     <head data-languageCode="{{ ob.defaultLanguageCode }}">
         {%if ob.defaultLanguageCode == "en" %}
-        <title>{{ob.data.EnglishSectionReference}}</title>
-         <meta property="og:title" content="{{ob.data.EnglishSectionReference}}" />
+        <title>{{ob.EnglishSectionReference}}</title>
+         <meta property="og:title" content="{{ob.EnglishSectionReference}}" />
         {% endif %}
         {%if ob.defaultLanguageCode == "he" %}
-        <title>{{ob.data.HebrewSectionReference}}</title>
-         <meta property="og:title" content="{{ob.data.HebrewSectionReference}}" />
+        <title>{{ob.HebrewSectionReference}}</title>
+         <meta property="og:title" content="{{ob.HebrewSectionReference}}" />
         {% endif %}
         <meta name="description" content="{{ob.meta_description}}" />
         <meta property="og:description" content="{{ob.meta_description}}" />
@@ -25,8 +25,8 @@
                 </div>
                 <div class="pure-u-1-2">
                     <div class="section-ref-header">
-                        <div class="en" {%if ob.defaultLanguageCode == "he" %}hidden{% endif %}>{{ob.data.EnglishSectionReference}}</div>
-                        <div class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>{{ob.data.HebrewSectionReference}}</div>
+                        <div class="en" {%if ob.defaultLanguageCode == "he" %}hidden{% endif %}>{{ob.EnglishSectionReference}}</div>
+                        <div class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>{{ob.HebrewSectionReference}}</div>
                     </div>
                     <div class="languageToggle">
                         <span class="en" {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}><img src="/img/aleph.svg" alt="א"></span>
@@ -41,18 +41,36 @@
             <div class="box1">
                     <div class="box">
                         <div class="en"  {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}>
-                            {% for elem in ob.data.EnglishText %}
-                                <p id="segment">
-                                {{ elem }}
-                                </p>
+                            <div class="pure-g">
+                            {% for elem in ob.english_data %}
+                                <div class="pure-u-1-24">
+                                    <p id="segment">
+                                    {{ elem[0] }}
+                                    </p>
+                                </div>
+                                <div class="pure-u-23-24">
+                                    <p id="segment">
+                                    {{ elem[1] }}
+                                    </p>
+                                </div>
                             {% endfor %}
+                            </div> 
                         </div>
                         <div class="he"  {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>
-                            {% for elem in ob.data.HebrewText %}
-                                <p id="segment">
-                                {{ elem }}
-                                </p>
+                            <div class="pure-g">
+                            {% for elem in ob.hebrew_data %}
+                                <div class="pure-u-1-24">
+                                    <p id="segment">
+                                    {{ elem[0] }}
+                                    </p>
+                                </div>
+                                <div class="pure-u-23-24">
+                                    <p id="segment">
+                                    {{ elem[1] }}
+                                    </p>
+                                </div>
                             {% endfor %}
+                            </div> 
                         </div>
                     </div>
             </div>
