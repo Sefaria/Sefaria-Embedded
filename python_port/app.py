@@ -88,8 +88,6 @@ def format_resource_for_view(resource, lang):
         resource["defaultLanguageCode"] = "en"
         resource["meta_description"] = get_first_50_characters(resource["EnglishText"])
 
-    resource["originalURLPath"] = resource
-
     del resource["HebrewText"]
     del resource["EnglishText"]
 
@@ -158,6 +156,7 @@ def local_get_resource(resource_name):
     result["EnglishText"] = english_text_array
     result["HebrewSectionReference"] = resource.HebrewSectionReference
     result["EnglishSectionReference"] = resource.EnglishSectionReference
+    result["resource_name"] = resource.resource_name
 
     session.commit()
     return result
