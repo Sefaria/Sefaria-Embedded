@@ -1,8 +1,0 @@
-localhost:3018 {
-#embed.sefaria.org {
-        log
-        root ./public
-        proxy / localhost:3017 {
-	        except /css /javascript /img /fonts
-        }
-}
