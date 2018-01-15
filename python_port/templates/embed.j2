@@ -10,17 +10,17 @@
         {% endif %}
         <meta name="description" content="{{ob.meta_description}}" />
         <meta property="og:description" content="{{ob.meta_description}}" />
-        <meta property="og:image" content="/img/ogimage.png" />
-        <link rel="icon" type="image/ico" href="/img/favicon.ico">
-        <link rel="stylesheet" href="/css/pure_base+grid.css">
-        <link rel="stylesheet" href="/css/embed.css">
+        <meta property="og:image" content="{{ url_for('static', filename = 'img/ogimage.png') }}" />
+        <link rel="icon" type="image/ico" href="{{ url_for('static', filename = 'img/favicon.ico') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename = 'css/pure_base+grid.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename = 'css/embed.css') }}">
     </head>
     <body>
         <div id="header">
             <div class="pure-g">
                 <div class="pure-u-1-2">
                     <div class="sefaria-svg-container">
-                        <img class="sefaria-svg" src="/img/sefaria.svg" alt="Sefaria logo">
+                        <img class="sefaria-svg" src="{{ url_for('static', filename = 'img/sefaria.svg') }}" alt="Sefaria logo">
                     </div>
                 </div>
                 <div class="pure-u-1-2">
@@ -29,8 +29,8 @@
                         <div class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}>{{ob.HebrewSectionReference}}</div>
                     </div>
                     <div class="languageToggle">
-                        <span class="en" {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}><img src="/img/aleph.svg" alt="א"></span>
-                        <span class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}><img src="/img/aye.svg" alt="A"></span>
+                        <span class="en" {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}><img src="{{ url_for('static', filename = 'img/aleph.svg') }}" alt="א"></span>
+                        <span class="he" {%if ob.defaultLanguageCode == "en"%}hidden{% endif %}><img src="{{ url_for('static', filename = 'img/aye.svg') }}" alt="A"></span>
                     </div>
                 </div>
             </div>
@@ -78,11 +78,11 @@
         <div id="footer">
             <div class="sefaria-ico-container">
                 <a href="http://www.sefaria.org/{{ob.resource_name}}" target="_blank"> 
-                    <img src="/img/favicon.ico" alt="בספריה">
+                    <img src="{{ url_for('static', filename = 'img/favicon.ico') }}" alt="בספריה">
                 </a>
             </div>
         </div>
     </body>
-<script type="text/javascript" src="/javascript/embed.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename = 'javascript/embed.js') }}"></script>
     
 </html>

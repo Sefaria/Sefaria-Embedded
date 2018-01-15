@@ -13,7 +13,7 @@ from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 
 import requests
 
