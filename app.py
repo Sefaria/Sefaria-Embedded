@@ -231,4 +231,4 @@ def get_first_50_characters(array):
 
 if __name__ == "__main__":
     Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
-    app.run(port=3017)
+    app.run(host='0.0.0.0', port=80)
