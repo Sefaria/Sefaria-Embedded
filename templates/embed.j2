@@ -10,7 +10,14 @@
         {% endif %}
         <meta name="description" content="{{ob.meta_description}}" />
         <meta property="og:description" content="{{ob.meta_description}}" />
-        <meta property="og:image" content="{{ url_for('static', filename = 'img/ogimage.png') }}" />
+
+        {%if ob.defaultLanguageCode == "en" %}
+        <meta property="og:image" content="/image/{{ob.EnglishSectionReference}}?lang=en" />
+        {% endif %}
+        {%if ob.defaultLanguageCode == "he" %}
+        <meta property="og:image" content="/image/{{ob.EnglishSectionReference}}?lang=he" />
+        {% endif %}
+
         <link rel="icon" type="image/ico" href="{{ url_for('static', filename = 'img/favicon.ico') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename = 'css/pure_base+grid.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename = 'css/embed.css') }}">
@@ -37,7 +44,7 @@
             
         </div>
         <div class="box0">
-            <div class="category-color-line"></div>
+            <div class="category-color-line" style="background-color: {{ob.category_color}}"></div>
             <div class="box1">
                     <div class="box">
                         <div class="en"  {%if ob.defaultLanguageCode == "he"%}hidden{% endif %}>

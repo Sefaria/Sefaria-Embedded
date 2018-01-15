@@ -13,12 +13,63 @@ from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_file, abort
 
 import requests
 
 from constants import *
 from gematriya import getGematriyaOfNumber
+
+import re
+from bidi.algorithm import get_display
+from image_utils import ImageText
+from PIL import Image
+import os
+
+category_colors = {
+  "Commentary":         "#4871bf",
+  "Tanakh":             "#004e5f",
+  "Midrash":            "#5d956f",
+  "Mishnah":            "#5a99b7",
+  "Talmud":             "#ccb479",
+  "Halakhah":           "#802f3e",
+  "Kabbalah":           "#594176",
+  "Philosophy":         "#7f85a9",
+  "Liturgy":            "#ab4e66",
+  "Tanaitic":           "#00827f",
+  "Parshanut":          "#9ab8cb",
+  "Chasidut":           "#97b386",
+  "Musar":              "#7c406f",
+  "Responsa":           "#cb6158",
+  "Apocrypha":          "#c7a7b4",
+  "Other":              "#073570",
+  "Quoting Commentary": "#cb6158",
+  "Sheets":             "#7c406f",
+  "Community":          "#7c406f",
+  "Targum":             "#7f85a9",
+  "Modern Works":       "#7c406f",
+  "Modern Commentary":  "#7c406f",
+}
+
+platform_settings = {
+    "twitter": {
+        "font_size": 30,
+        "additional_line_spacing": 10,
+        "image_width": 506,
+        "image_height": 253,
+        "margin": 20,
+        "category_color_line_width": 7
+},
+    "facebook": {
+        "font_size": 76,
+        "additional_line_spacing": 25,
+        "image_width": 1200,
+        "image_height": 630,
+        "margin": 40,
+        "category_color_line_width": 15
+    }
+
+}
 
 #Database
 engine = create_engine('sqlite:///test.db', echo=False)
@@ -37,6 +88,7 @@ class SefariaResource(Base):
     id = Column(Integer, primary_key=True)
     HebrewSectionReference = Column(String)
     EnglishSectionReference = Column(String)
+    resource_category = Column(String)
     resource_name = Column(String)
     seen_count = Column(Integer, default=1)
     created_timestamp = Column(DateTime, server_default=func.now())
@@ -56,7 +108,7 @@ Base.metadata.create_all(engine)
 # Web App
 app = Flask(__name__)
 
-@app.route("/<resource>")
+@app.route("/embed/<resource>")
 def root(resource):
     """Returns the embed page for a given Sefaria resource"""
     lang = request.args.get('lang')
@@ -65,6 +117,69 @@ def root(resource):
     result = format_resource_for_view(result, lang)
 
     return render_template("embed.j2", ob=result)
+
+@app.route("/image/<resource>")
+def get_image(resource):
+    lang = request.args.get('lang')
+    platform = request.args.get('platform')
+
+    if platform is None: platform = "twitter"
+
+    result = get_resource(resource)
+
+    text_color = (121, 121, 121)
+    font_file = "TaameyFrankCLM-Medium.ttf" if lang == "he" else "Amiri-Regular.ttf"
+    category_color_line_color = category_colors[result["resource_category"]]
+
+    font_size = platform_settings[platform]["font_size"]
+    image_width = platform_settings[platform]["image_width"]
+    image_height = platform_settings[platform]["image_height"]
+    margin = platform_settings[platform]["margin"]
+    category_color_line_width = platform_settings[platform]["category_color_line_width"]
+    additional_line_spacing = platform_settings[platform]["additional_line_spacing"]
+
+
+    img = ImageText((image_width, image_height), background=(255, 255, 255, 255))
+
+    text = result["HebrewText"] if lang == "he" else result["EnglishText"]
+
+    text = ' '.join(text)
+
+    text = cleanup_and_format_text(text, lang)
+
+
+    if len(text) == 0:
+        abort(204)
+
+    if lang == "he":
+        img.write_text_box((margin, -font_size * .5), text, box_width=image_width - 2 * margin, font_filename=font_file,
+                           font_size=font_size, color=text_color,
+                           place='justify', RTL=True, additional_line_spacing=additional_line_spacing)
+        """
+        img.write_text_box((margin - 40, image_height - font_size * 1.5), get_display(result["HebrewSectionReference"]),
+                           box_width=image_width - 2 * margin, font_filename=font_file, font_size=15, color=text_color,
+                           place='right', RTL=True)
+        """
+
+
+    else:
+        img.write_text_box((margin, -font_size), text, box_width=image_width - 2 * margin, font_filename=font_file,
+                           font_size=font_size, color=text_color,
+                           place='justify', RTL=False)
+        """
+        img.write_text_box((margin, image_height - font_size * 1.5), get_display(result["EnglishSectionReference"]),
+                           box_width=image_width - 2 * margin, font_filename=font_file, font_size=15,
+                           color=text_color, place='left', RTL=False)
+        """
+
+    img.draw.line((0, category_color_line_width/2, image_width, category_color_line_width/2), fill=category_color_line_color, width=category_color_line_width)
+
+    img.save(os.path.dirname(os.path.realpath(__file__))+"/generatedImages/sample-imagetext.png")
+
+
+
+    return send_file('generatedImages/sample-imagetext.png', mimetype='image/png')
+
 
 
 def format_resource_for_view(resource, lang):
@@ -77,6 +192,9 @@ def format_resource_for_view(resource, lang):
 
     resource["english_data"] = [[i + 1, resource["EnglishText"][i]]
                                 for i in range(len(resource["EnglishText"]))]
+
+    resource["category_color"] = category_colors[resource["resource_category"]]
+
 
     if lang == 'he':
         resource["defaultLanguageCode"] = "he"
@@ -112,19 +230,21 @@ def get_resource(resource_name):
 def remote_get_resource(resource_name):
     """Issues a GET request to fetch resource and returns dictionary of the relevant data"""
     url = urljoin(SEFARIA_API_NODE, resource_name)
-
-    response = requests.get(url)
-    response = requests.get(urljoin(SEFARIA_API_NODE, resource_name))
+    params = dict(
+        commentary=0,
+        context=0
+    )
+    response = requests.get(url, params=params)
     response.encoding = "UTF-8"
     full_json = response.json()
 
-    del full_json["commentary"]
     # Parse the relevant parts of the json
     parsed_response = {}
-    parsed_response["HebrewText"] = full_json["he"]
-    parsed_response["EnglishText"] = full_json["text"]
+    parsed_response["HebrewText"] = full_json["he"] if type(full_json["he"]) is list else [full_json["he"]]
+    parsed_response["EnglishText"] = full_json["text"] if type(full_json["text"]) is list else [full_json["text"]]
     parsed_response["HebrewSectionReference"] = full_json["heSectionRef"]
     parsed_response["EnglishSectionReference"] = full_json["sectionRef"]
+    parsed_response["resource_category"] = full_json["primary_category"]
     parsed_response["resource_name"] = resource_name
 
     # Add the resource to the local data store
@@ -156,6 +276,7 @@ def local_get_resource(resource_name):
     result["EnglishText"] = english_text_array
     result["HebrewSectionReference"] = resource.HebrewSectionReference
     result["EnglishSectionReference"] = resource.EnglishSectionReference
+    result["resource_category"] = resource.resource_category
     result["resource_name"] = resource.resource_name
 
     session.commit()
@@ -165,6 +286,7 @@ def local_add_resource(resource_dict):
     resource = SefariaResource(
         HebrewSectionReference=resource_dict["HebrewSectionReference"],
         EnglishSectionReference=resource_dict["EnglishSectionReference"],
+        resource_category=resource_dict["resource_category"],
         resource_name=resource_dict["resource_name"])
     session.add(resource)
     session.flush() #To make sure the id is assigned for future foreign key reference
@@ -228,6 +350,28 @@ def get_first_50_characters(array):
             if len(result) >= 50:
                 return result
     return result
+
+def smart_truncate(content, length=180, suffix='...'):
+    if len(content) <= length:
+        return content
+    else:
+        return ' '.join(content[:length+1].split(' ')[0:-1]) + suffix
+
+def cleanup_and_format_text(text, language):
+#removes html tags, nikkudot and taamim. Applies BIDI algorithm to text so that letters aren't reversed in PIL.
+    cleanr = re.compile('<.*?>')
+    text = re.sub(cleanr, '', text)
+    text = text.replace(u"\u05BE", " ")  #replace hebrew dash with ascii
+
+    if language == "he":
+        strip_cantillation_vowel_regex = re.compile(ur"[^\u05d0-\u05f4\s^\x00-\x7F\x80-\xFF\u0100-\u017F\u0180-\u024F\u1E00-\u1EFF\u2000-\u206f]", re.UNICODE)
+    else:
+        strip_cantillation_vowel_regex = re.compile(ur"[^\s^\x00-\x7F\x80-\xFF\u0100-\u017F\u0180-\u024F\u1E00-\u1EFF\u2000-\u206f]", re.UNICODE)
+    text = strip_cantillation_vowel_regex.sub('', text)
+    text = smart_truncate(text)
+    text = get_display(text)
+    return text
+
 
 if __name__ == "__main__":
     Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
