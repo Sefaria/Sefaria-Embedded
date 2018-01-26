@@ -23,7 +23,7 @@ from gematriya import getGematriyaOfNumber
 import re
 from bidi.algorithm import get_display
 from image_utils import ImageText
-from PIL import Image
+from PIL import Image, ImageFont
 import os
 
 category_colors = {
@@ -58,15 +58,31 @@ platform_settings = {
         "image_width": 506,
         "image_height": 253,
         "margin": 20,
-        "category_color_line_width": 7
-},
+        "category_color_line_width": 7,
+        "sefaria_branding": False,
+        "branding_height": 0
+    },
     "facebook": {
         "font_size": 76,
         "additional_line_spacing": 25,
         "image_width": 1200,
         "image_height": 630,
         "margin": 40,
-        "category_color_line_width": 15
+        "category_color_line_width": 15,
+        "sefaria_branding": False,
+        "branding_height": 0
+
+    },
+
+    "instagram": {
+        "font_size": 70,
+        "additional_line_spacing": 20,
+        "image_width": 1040,
+        "image_height": 1040,
+        "margin": 40,
+        "category_color_line_width": 13,
+        "sefaria_branding": True,
+        "branding_height": 100
     }
 
 }
@@ -123,7 +139,7 @@ def get_image(resource):
     lang = request.args.get('lang')
     platform = request.args.get('platform')
 
-    if platform is None: platform = "twitter"
+    if platform is None: platform = "facebook"
 
     result = get_resource(resource)
 
@@ -137,11 +153,14 @@ def get_image(resource):
     margin = platform_settings[platform]["margin"]
     category_color_line_width = platform_settings[platform]["category_color_line_width"]
     additional_line_spacing = platform_settings[platform]["additional_line_spacing"]
+    sefaria_branding = platform_settings[platform]["sefaria_branding"]
+    branding_height = platform_settings[platform]["branding_height"]
 
 
     img = ImageText((image_width, image_height), background=(255, 255, 255, 255))
 
     text = result["HebrewText"] if lang == "he" else result["EnglishText"]
+    title = result["HebrewSectionReference"] if lang == "he" else result["EnglishSectionReference"]
 
     text = ' '.join(text)
 
@@ -152,27 +171,23 @@ def get_image(resource):
         abort(204)
 
     if lang == "he":
-        img.write_text_box((margin, -font_size * .5), text, box_width=image_width - 2 * margin, font_filename=font_file,
+        img.write_text_box((margin, -font_size * .5 +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
                            font_size=font_size, color=text_color,
                            place='justify', RTL=True, additional_line_spacing=additional_line_spacing)
-        """
-        img.write_text_box((margin - 40, image_height - font_size * 1.5), get_display(result["HebrewSectionReference"]),
-                           box_width=image_width - 2 * margin, font_filename=font_file, font_size=15, color=text_color,
-                           place='right', RTL=True)
-        """
 
 
     else:
-        img.write_text_box((margin, -font_size), text, box_width=image_width - 2 * margin, font_filename=font_file,
+        img.write_text_box((margin, -font_size +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
                            font_size=font_size, color=text_color,
                            place='justify', RTL=False)
-        """
-        img.write_text_box((margin, image_height - font_size * 1.5), get_display(result["EnglishSectionReference"]),
-                           box_width=image_width - 2 * margin, font_filename=font_file, font_size=15,
-                           color=text_color, place='left', RTL=False)
-        """
 
     img.draw.line((0, category_color_line_width/2, image_width, category_color_line_width/2), fill=category_color_line_color, width=category_color_line_width)
+
+    if (sefaria_branding):
+        font = ImageFont.truetype(os.path.dirname(os.path.realpath(__file__))+"/static/fonts/"+font_file, font_size)
+        img.draw.line((0, branding_height/2+category_color_line_width, image_width, branding_height/2+category_color_line_width), fill=(247, 248, 248, 255), width=branding_height)
+        w, h = img.draw.textsize(title, font=font)
+        img.draw.text(((image_width - w) / 2, (branding_height+category_color_line_width/2 - h) / 2), cleanup_and_format_text(title,lang), fill=(35, 31, 32, 255), font=font)
 
     img.save(os.path.dirname(os.path.realpath(__file__))+"/generatedImages/sample-imagetext.png")
 
@@ -374,5 +389,5 @@ def cleanup_and_format_text(text, language):
 
 
 if __name__ == "__main__":
-    Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
-    app.run(host='0.0.0.0', port=80)
+#    Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
+    app.run(host='0.0.0.0', port=80, debug=True)
