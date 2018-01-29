@@ -14,7 +14,7 @@ import os
 
 class ImageText(object):
 
-    def __init__(self, filename_or_size, mode='RGBA', background=(0, 0, 0, 0),
+    def __init__(self, filename_or_size, mode='RGB', background=(0, 0, 0),
                  encoding='utf8'):
         if isinstance(filename_or_size, str):
             self.filename = filename_or_size
@@ -30,6 +30,8 @@ class ImageText(object):
     def save(self, filename=None):
         self.image.save(filename or self.filename)
 
+    def paste(self, second_image, (x1, y1)):
+        self.image.paste(second_image, (x1, y1))
 
 
     def get_font_size(self, text, font, max_width=None, max_height=None):

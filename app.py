@@ -171,23 +171,28 @@ def get_image(resource):
         abort(204)
 
     if lang == "he":
-        img.write_text_box((margin, -font_size * .5 +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
+        img.write_text_box((margin, -font_size * .75 +branding_height+margin), text, box_width=image_width - 2 * margin, font_filename=font_file,
                            font_size=font_size, color=text_color,
                            place='justify', RTL=True, additional_line_spacing=additional_line_spacing)
 
 
     else:
-        img.write_text_box((margin, -font_size +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
+        img.write_text_box((margin, -font_size +branding_height+margin), text, box_width=image_width - 2 * margin, font_filename=font_file,
                            font_size=font_size, color=text_color,
                            place='justify', RTL=False)
 
     img.draw.line((0, category_color_line_width/2, image_width, category_color_line_width/2), fill=category_color_line_color, width=category_color_line_width)
 
     if (sefaria_branding):
+        # Add Title Header
         font = ImageFont.truetype(os.path.dirname(os.path.realpath(__file__))+"/static/fonts/"+font_file, font_size)
         img.draw.line((0, branding_height/2+category_color_line_width, image_width, branding_height/2+category_color_line_width), fill=(247, 248, 248, 255), width=branding_height)
         w, h = img.draw.textsize(title, font=font)
         img.draw.text(((image_width - w) / 2, (branding_height+category_color_line_width/2 - h) / 2), cleanup_and_format_text(title,lang), fill=(35, 31, 32, 255), font=font)
+
+        # Add footer
+        footer = Image.open(os.path.dirname(os.path.realpath(__file__))+"/static/img/footer.png")
+        img.paste(footer, (0, image_height-116))
 
     img.save(os.path.dirname(os.path.realpath(__file__))+"/generatedImages/sample-imagetext.png")
 
@@ -389,5 +394,5 @@ def cleanup_and_format_text(text, language):
 
 
 if __name__ == "__main__":
-#    Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
-    app.run(host='0.0.0.0', port=80, debug=True)
+    Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
+    app.run(host='0.0.0.0', port=80)
