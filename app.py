@@ -171,13 +171,13 @@ def get_image(resource):
         abort(204)
 
     if lang == "he":
-        img.write_text_box((margin, -font_size * .75 +branding_height+margin), text, box_width=image_width - 2 * margin, font_filename=font_file,
+        img.write_text_box((margin, -font_size * .5 +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
                            font_size=font_size, color=text_color,
                            place='justify', RTL=True, additional_line_spacing=additional_line_spacing)
 
 
     else:
-        img.write_text_box((margin, -font_size +branding_height+margin), text, box_width=image_width - 2 * margin, font_filename=font_file,
+        img.write_text_box((margin, -font_size +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
                            font_size=font_size, color=text_color,
                            place='justify', RTL=False)
 
