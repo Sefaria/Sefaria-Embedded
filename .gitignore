@@ -44,3 +44,5 @@ __pycache__/
 \.idea/
 
 generatedImages/
+
+.idea/workspace.xml
