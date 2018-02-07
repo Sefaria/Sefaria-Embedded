@@ -236,13 +236,7 @@ def format_resource_for_view(resource, lang):
 # return render_template("error.j2", ob=render_obj)
 
 def get_resource(resource_name):
-    """Looks for the Sefaria resource locally, otherwise fetches it from the api"""
-    #Check if it exists locally
-    result = local_get_resource(resource_name)
-
-    if result is None:  #If it does not exist locally, get it from the api
-        print "Result not found locally. Fetching from API..."
-        result = remote_get_resource(resource_name)
+    result = remote_get_resource(resource_name)
 
     return result
 
@@ -267,100 +261,9 @@ def remote_get_resource(resource_name):
     parsed_response["resource_category"] = full_json["primary_category"]
     parsed_response["resource_name"] = resource_name
 
-    # Add the resource to the local data store
-    local_add_resource(parsed_response)
-
     # Pass the resource back to the web app
     return parsed_response
 
-def local_get_resource(resource_name):
-    resource = session.query(SefariaResource).filter_by(resource_name=resource_name).first()
-
-    if resource is None:
-        return resource
-
-    english_text_array = [] 
-    for row in session.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="en").order_by(ResourceTextSection.text_index):
-        english_text_array.append(row.text)
-    
-
-    hebrew_text_array = []
-    for row in session.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="he").order_by(ResourceTextSection.text_index):
-        hebrew_text_array.append(row.text)
-
-    # Update the counter of how many times this resource has been seen
-    resource.seen_count += 1
-
-    result = {}
-    result["HebrewText"] = hebrew_text_array
-    result["EnglishText"] = english_text_array
-    result["HebrewSectionReference"] = resource.HebrewSectionReference
-    result["EnglishSectionReference"] = resource.EnglishSectionReference
-    result["resource_category"] = resource.resource_category
-    result["resource_name"] = resource.resource_name
-
-    session.commit()
-    return result
-
-def local_add_resource(resource_dict):
-    resource = SefariaResource(
-        HebrewSectionReference=resource_dict["HebrewSectionReference"],
-        EnglishSectionReference=resource_dict["EnglishSectionReference"],
-        resource_category=resource_dict["resource_category"],
-        resource_name=resource_dict["resource_name"])
-    session.add(resource)
-    session.flush() #To make sure the id is assigned for future foreign key reference
-
-    # add all of the section text in seperate table
-    hebrew_text_index = 0
-    for text in resource_dict["HebrewText"]:
-        hebrew_text_index += 1
-        text_section = ResourceTextSection(
-            resource_id=resource.id,
-            language_code="he",
-            text_index=hebrew_text_index,
-            text=text)
-        session.add(text_section)
-
-    english_text_index = 0
-    for text in resource_dict["EnglishText"]:
-        english_text_index += 1
-        text_section = ResourceTextSection(
-            resource_id=resource.id,
-            language_code="en",
-            text_index=english_text_index,
-            text=text)
-        session.add(text_section)
-
-    session.commit()
-    return
-
-def local_monitor_resources(delay):
-    session2 = Session()
-
-    while True:
-        for resource in session2.query(SefariaResource):
-            seconds_old = (datetime.utcnow() - resource.last_seen_timestamp).total_seconds()
-            if seconds_old > CACHE_LIFETIME_SECONDS:
-                print "Deleting " + resource.resource_name + " which is " + str(seconds_old) + " seconds old"
-                local_delete_resource(session2, resource.resource_name)
-        time.sleep(delay)
-
-def local_delete_resource(session2, resource_name):
-    resource = session2.query(SefariaResource).filter_by(resource_name=resource_name).first()
-
-    if resource is None:
-        return resource
-
-    for row in session2.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="en").order_by(ResourceTextSection.text_index):
-        session2.delete(row)
-
-    for row in session2.query(ResourceTextSection).filter_by(resource_id=resource.id, language_code="he").order_by(ResourceTextSection.text_index):
-        session2.delete(row)
-
-    session2.delete(resource)
-
-    session2.commit()
 
 def get_first_50_characters(array):
     result = ""
@@ -394,5 +297,4 @@ def cleanup_and_format_text(text, language):
 
 
 if __name__ == "__main__":
-    Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
     app.run(host='0.0.0.0', port=443)
