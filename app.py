@@ -299,7 +299,11 @@ def local_get_resource(resource_name):
     result["resource_category"] = resource.resource_category
     result["resource_name"] = resource.resource_name
 
-    session.commit()
+    try:
+        session.commit()
+    except:
+        session.rollback()
+        raise
     return result
 
 def local_add_resource(resource_dict):
@@ -332,7 +336,11 @@ def local_add_resource(resource_dict):
             text=text)
         session.add(text_section)
 
-    session.commit()
+    try:
+        session.commit()
+    except:
+        session.rollback()
+        raise
     return
 
 def local_monitor_resources(delay):
@@ -360,7 +368,11 @@ def local_delete_resource(session2, resource_name):
 
     session2.delete(resource)
 
-    session2.commit()
+    try:
+        session2.commit()
+    except:
+        session2.rollback()
+        raise
 
 def get_first_50_characters(array):
     result = ""
