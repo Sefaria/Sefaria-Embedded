@@ -3,20 +3,31 @@
         {%if ob.defaultLanguageCode == "en" %}
         <title>{{ob.EnglishSectionReference}}</title>
          <meta property="og:title" content="{{ob.EnglishSectionReference}}" />
+         <meta name="twitter:title" content="{{ob.EnglishSectionReference}} /">
         {% endif %}
         {%if ob.defaultLanguageCode == "he" %}
         <title>{{ob.HebrewSectionReference}}</title>
          <meta property="og:title" content="{{ob.HebrewSectionReference}}" />
+         <meta name="twitter:title" content="{{ob.HebrewSectionReference}} /">
         {% endif %}
         <meta name="description" content="{{ob.meta_description}}" />
         <meta property="og:description" content="{{ob.meta_description}}" />
+        <meta name="twitter:description" content="{{ob.meta_description}} /">
 
         {%if ob.defaultLanguageCode == "en" %}
-        <meta property="og:image" content="/image/{{ob.EnglishSectionReference}}?lang=en" />
+        <meta property="og:image" content="http://embed.sefaria.org/image/{{ob.EnglishSectionReference}}?lang=en&platform=facebook" />
+        <meta name="twitter:image" content="http://embed.sefaria.org/image/{{ob.EnglishSectionReference}}?lang=en&platform=twitter">
         {% endif %}
         {%if ob.defaultLanguageCode == "he" %}
-        <meta property="og:image" content="/image/{{ob.EnglishSectionReference}}?lang=he" />
+        <meta property="og:image" content="http://embed.sefaria.org/image/{{ob.EnglishSectionReference}}?lang=he&platform=facebook" />
+        <meta name="twitter:image" content="http://embed.sefaria.org/image/{{ob.EnglishSectionReference}}?lang=he&platform=twitter">
+
         {% endif %}
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@sefariaproject">
+        <meta name="twitter:creator" content="@sefariaproject">
 
         <link rel="icon" type="image/ico" href="{{ url_for('static', filename = 'img/favicon.ico') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename = 'css/pure_base+grid.css') }}">
