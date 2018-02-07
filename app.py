@@ -395,4 +395,4 @@ def cleanup_and_format_text(text, language):
 
 if __name__ == "__main__":
     Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=443)
