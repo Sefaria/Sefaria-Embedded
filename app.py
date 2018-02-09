@@ -124,81 +124,78 @@ Base.metadata.create_all(engine)
 # Web App
 app = Flask(__name__)
 
-@app.route("/embed/<resource>")
+@app.route("/<resource>")
 def root(resource):
-    """Returns the embed page for a given Sefaria resource"""
+    route = request.args.get('route')
     lang = request.args.get('lang')
-
-    result = get_resource(resource)
-    result = format_resource_for_view(result, lang)
-
-    return render_template("embed.j2", ob=result)
-
-@app.route("/image/<resource>")
-def get_image(resource):
-    lang = request.args.get('lang')
-    platform = request.args.get('platform')
-
-    if platform is None: platform = "facebook"
-
     result = get_resource(resource)
 
-    text_color = (121, 121, 121)
-    font_file = "TaameyFrankCLM-Medium.ttf" if lang == "he" else "Amiri-Regular.ttf"
-    category_color_line_color = category_colors[result["resource_category"]]
-
-    font_size = platform_settings[platform]["font_size"]
-    image_width = platform_settings[platform]["image_width"]
-    image_height = platform_settings[platform]["image_height"]
-    margin = platform_settings[platform]["margin"]
-    category_color_line_width = platform_settings[platform]["category_color_line_width"]
-    additional_line_spacing = platform_settings[platform]["additional_line_spacing"]
-    sefaria_branding = platform_settings[platform]["sefaria_branding"]
-    branding_height = platform_settings[platform]["branding_height"]
-
-
-    img = ImageText((image_width, image_height), background=(255, 255, 255, 255))
-
-    text = result["HebrewText"] if lang == "he" else result["EnglishText"]
-    title = result["HebrewSectionReference"] if lang == "he" else result["EnglishSectionReference"]
-
-    text = ' '.join(text)
-
-    text = cleanup_and_format_text(text, lang)
-
-
-    if len(text) == 0:
-        abort(204)
-
-    if lang == "he":
-        img.write_text_box((margin, -font_size * .5 +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
-                           font_size=font_size, color=text_color,
-                           place='justify', RTL=True, additional_line_spacing=additional_line_spacing)
-
+    if route == "embed":
+        result = format_resource_for_view(result, lang)
+        return render_template("embed.j2", ob=result)
 
     else:
-        img.write_text_box((margin, -font_size +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
-                           font_size=font_size, color=text_color,
-                           place='justify', RTL=False)
+        platform = request.args.get('platform')
 
-    img.draw.line((0, category_color_line_width/2, image_width, category_color_line_width/2), fill=category_color_line_color, width=category_color_line_width)
-
-    if (sefaria_branding):
-        # Add Title Header
-        font = ImageFont.truetype(os.path.dirname(os.path.realpath(__file__))+"/static/fonts/"+font_file, font_size)
-        img.draw.line((0, branding_height/2+category_color_line_width, image_width, branding_height/2+category_color_line_width), fill=(247, 248, 248, 255), width=branding_height)
-        w, h = img.draw.textsize(title, font=font)
-        img.draw.text(((image_width - w) / 2, (branding_height+category_color_line_width/2 - h) / 2), cleanup_and_format_text(title,lang), fill=(35, 31, 32, 255), font=font)
-
-        # Add footer
-        footer = Image.open(os.path.dirname(os.path.realpath(__file__))+"/static/img/footer.png")
-        img.paste(footer, (0, image_height-116))
-
-    img.save(os.path.dirname(os.path.realpath(__file__))+"/generatedImages/sample-imagetext.png")
+        if platform is None: platform = "facebook"
 
 
+        text_color = (121, 121, 121)
+        font_file = "TaameyFrankCLM-Medium.ttf" if lang == "he" else "Amiri-Regular.ttf"
+        category_color_line_color = category_colors[result["resource_category"]]
 
-    return send_file('generatedImages/sample-imagetext.png', mimetype='image/png')
+        font_size = platform_settings[platform]["font_size"]
+        image_width = platform_settings[platform]["image_width"]
+        image_height = platform_settings[platform]["image_height"]
+        margin = platform_settings[platform]["margin"]
+        category_color_line_width = platform_settings[platform]["category_color_line_width"]
+        additional_line_spacing = platform_settings[platform]["additional_line_spacing"]
+        sefaria_branding = platform_settings[platform]["sefaria_branding"]
+        branding_height = platform_settings[platform]["branding_height"]
+
+
+        img = ImageText((image_width, image_height), background=(255, 255, 255, 255))
+
+        text = result["HebrewText"] if lang == "he" else result["EnglishText"]
+        title = result["HebrewSectionReference"] if lang == "he" else result["EnglishSectionReference"]
+
+        text = ' '.join(text)
+
+        text = cleanup_and_format_text(text, lang)
+
+
+        if len(text) == 0:
+            abort(204)
+
+        if lang == "he":
+            img.write_text_box((margin, -font_size * .5 +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
+                               font_size=font_size, color=text_color,
+                               place='justify', RTL=True, additional_line_spacing=additional_line_spacing)
+
+
+        else:
+            img.write_text_box((margin, -font_size +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
+                               font_size=font_size, color=text_color,
+                               place='justify', RTL=False)
+
+        img.draw.line((0, category_color_line_width/2, image_width, category_color_line_width/2), fill=category_color_line_color, width=category_color_line_width)
+
+        if (sefaria_branding):
+            # Add Title Header
+            font = ImageFont.truetype(os.path.dirname(os.path.realpath(__file__))+"/static/fonts/"+font_file, font_size)
+            img.draw.line((0, branding_height/2+category_color_line_width, image_width, branding_height/2+category_color_line_width), fill=(247, 248, 248, 255), width=branding_height)
+            w, h = img.draw.textsize(title, font=font)
+            img.draw.text(((image_width - w) / 2, (branding_height+category_color_line_width/2 - h) / 2), cleanup_and_format_text(title,lang), fill=(35, 31, 32, 255), font=font)
+
+            # Add footer
+            footer = Image.open(os.path.dirname(os.path.realpath(__file__))+"/static/img/footer.png")
+            img.paste(footer, (0, image_height-116))
+
+        img.save(os.path.dirname(os.path.realpath(__file__))+"/generatedImages/sample-imagetext.png")
+
+
+
+        return send_file('generatedImages/sample-imagetext.png', mimetype='image/png')
 
 
 
