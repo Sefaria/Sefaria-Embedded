@@ -27,8 +27,8 @@ class ImageText(object):
         self.draw = ImageDraw.Draw(self.image)
         self.encoding = encoding
 
-    def save(self, filename=None):
-        self.image.save(filename or self.filename)
+    def save(self, filename=None, format=None):
+        self.image.save(filename or self.filename, format=format)
 
     def paste(self, second_image, (x1, y1)):
         self.image.paste(second_image, (x1, y1))

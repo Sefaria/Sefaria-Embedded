@@ -2,6 +2,7 @@
 """An embed server for Sefaria.org"""
 import sys
 import time
+from StringIO import StringIO
 from threading import Thread
 from urlparse import urljoin
 from threading import Thread
@@ -191,11 +192,13 @@ def root(resource):
             footer = Image.open(os.path.dirname(os.path.realpath(__file__))+"/static/img/footer.png")
             img.paste(footer, (0, image_height-116))
 
-        img.save(os.path.dirname(os.path.realpath(__file__))+"/generatedImages/sample-imagetext.png")
+#        img.save(os.path.dirname(os.path.realpath(__file__))+"/generatedImages/sample-imagetext.png")
 
+        img_io = StringIO()
+        img.save(img_io, format="png")
+        img_io.seek(0)
+        return send_file(img_io, mimetype='image/png')
 
-
-        return send_file('generatedImages/sample-imagetext.png', mimetype='image/png')
 
 
 
