@@ -1,4 +1,6 @@
 sqlalchemy
 flask
+gunicorn
+Pillow
 requests
 python-bidi

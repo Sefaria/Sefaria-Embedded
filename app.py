@@ -14,7 +14,7 @@ from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
-from flask import Flask, render_template, request, send_file, abort
+from flask import Flask, render_template, request, send_file, abort, send_from_directory
 
 import requests
 
@@ -124,6 +124,11 @@ Base.metadata.create_all(engine)
 
 # Web App
 app = Flask(__name__)
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route("/<resource>")
 def root(resource):
@@ -407,4 +412,4 @@ def cleanup_and_format_text(text, language):
 
 if __name__ == "__main__":
 #    Thread(target=local_monitor_resources, args=(CACHE_MONITOR_LOOP_DELAY_IN_SECONDS,)).start()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0')
