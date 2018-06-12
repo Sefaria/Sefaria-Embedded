@@ -61,5 +61,4 @@ skip_files:
     - lib/werkzeug*
     - lib/Werkzeug*
     - venv/*
-    - *.pyc
 
