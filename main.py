@@ -86,7 +86,7 @@ def root(resource):
             font = ImageFont.truetype(os.path.dirname(os.path.realpath(__file__))+"/static/fonts/"+font_file, font_size)
             img.draw.line((0, branding_height/2+category_color_line_width, image_width, branding_height/2+category_color_line_width), fill=(247, 248, 248, 255), width=branding_height)
             w, h = img.draw.textsize(title, font=font)
-            img.draw.text(((image_width - w) / 2, (branding_height+category_color_line_width/2 - h) / 2), title, fill=(35, 31, 32, 255), font=font)
+            img.draw.text(((image_width - w) / 2, (branding_height+category_color_line_width/2 - h) / 2), cleanup_and_format_text(title,lang), fill=(35, 31, 32, 255), font=font)
 
             # Add footer
             footer = Image.open(os.path.dirname(os.path.realpath(__file__))+"/static/img/footer.png")
