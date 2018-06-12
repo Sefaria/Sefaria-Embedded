@@ -42,9 +42,14 @@ __pycache__/
 .vscode/
 
 \.idea/
-
 generatedImages/
 
 .idea/workspace.xml
 
 embed.wsgi
+
+venv/
+lib/
+.idea/sefaria-embedded.iml
+.idea/
+.idea/inspectionProfiles/Project_Default.xml
