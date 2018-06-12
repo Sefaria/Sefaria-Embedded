@@ -34,7 +34,7 @@ def root(resource):
     result = remote_get_resource(resource)
 
     if route == "embed":
-        #result = format_resource_for_view(result, lang)
+        result = format_resource_for_view(result, lang)
         return render_template("embed.j2", ob=result)
 
     else:
@@ -130,6 +130,34 @@ def remote_get_resource(resource_name):
     except urlfetch.Error:
         logging.exception('Caught exception fetching url')
 
+def format_resource_for_view(resource, lang):
+    """format_resource_for_view receives a resource that was received from the database
+    and modifies it to the proper format needed for view rendering"""
+
+    # Add line numbers
+    resource["hebrew_data"] = [[getGematriyaOfNumber(i + 1), resource["HebrewText"][i]]
+                               for i in range(len(resource["HebrewText"]))]
+
+    resource["english_data"] = [[i + 1, resource["EnglishText"][i]]
+                                for i in range(len(resource["EnglishText"]))]
+
+    resource["category_color"] = category_colors[resource["resource_category"]]
+
+
+    if lang == 'he':
+        resource["defaultLanguageCode"] = "he"
+        resource["meta_description"] = smart_truncate(resource["HebrewText"], length=50, suffix="")
+    elif lang == 'en':
+        resource["defaultLanguageCode"] = "en"
+        resource["meta_description"] = smart_truncate(resource["EnglishText"], length=50, suffix="")
+    else:
+        resource["defaultLanguageCode"] = "en"
+        resource["meta_description"] = smart_truncate(resource["EnglishText"], length=50, suffix="")
+
+    del resource["HebrewText"]
+    del resource["EnglishText"]
+
+    return resource
 
 
 def smart_truncate(content, length=180, suffix='...'):
