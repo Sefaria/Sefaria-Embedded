@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """An embed server for Sefaria.org"""
-import time
 from StringIO import StringIO
 from urlparse import urljoin
-from datetime import datetime
 from google.appengine.api import urlfetch
+from google.appengine.api import memcache
 
 import logging
 import json
@@ -31,7 +30,8 @@ def favicon():
 def root(resource):
     route = request.args.get('route')
     lang = request.args.get('lang')
-    result = remote_get_resource(resource)
+
+    result = get_resource(resource)
 
     if route == "embed":
         result = format_resource_for_view(result, lang)
@@ -98,6 +98,16 @@ def root(resource):
         img.save(img_io, format="png")
         img_io.seek(0)
         return send_file(img_io, mimetype='image/png')
+
+def get_resource(resource):
+    result = memcache.get(resource)
+    if result is not None:
+        return result
+    else:
+        result = remote_get_resource(resource)
+        memcache.add(key=resource, value=result)
+    return result
+
 
 def remote_get_resource(resource_name):
     """Issues a GET request to fetch resource and returns dictionary of the relevant data"""
