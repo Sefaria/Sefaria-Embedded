@@ -56,7 +56,7 @@ def root(resource):
         image_height = platform_settings[platform]["image_height"]
         margin = platform_settings[platform]["margin"]
         category_color_line_width = platform_settings[platform]["category_color_line_width"]
-        additional_line_spacing = platform_settings[platform]["additional_line_spacing"]
+        additional_line_spacing = platform_settings[platform]["additional_line_spacing_he"] if lang == "he" else platform_settings[platform]["additional_line_spacing_en"]
         sefaria_branding = platform_settings[platform]["sefaria_branding"]
         branding_height = platform_settings[platform]["branding_height"]
 
@@ -82,7 +82,7 @@ def root(resource):
         else:
             img.write_text_box((margin, -font_size +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
                                font_size=font_size, color=text_color,
-                               place='justify', RTL=False)
+                               place='justify', RTL=False, additional_line_spacing=additional_line_spacing)
 
         img.draw.line((0, category_color_line_width/2, image_width, category_color_line_width/2), fill=category_color_line_color, width=category_color_line_width)
 
@@ -90,14 +90,23 @@ def root(resource):
             # Add Title Header
             font = ImageFont.truetype(os.path.dirname(os.path.realpath(__file__))+"/static/fonts/"+font_file, font_size)
             img.draw.line((0, branding_height/2+category_color_line_width, image_width, branding_height/2+category_color_line_width), fill=(247, 248, 248, 255), width=branding_height)
+
+
             w, h = img.draw.textsize(title, font=font)
-            img.draw.text(((image_width - w) / 2, (branding_height+category_color_line_width/2 - h) / 2), cleanup_and_format_text(title,lang), fill=(35, 31, 32, 255), font=font)
+            img.draw.text(((image_width - w) / 2, (((branding_height/2)+category_color_line_width))-(h/2)), cleanup_and_format_text(title,lang), fill=(35, 31, 32, 255), font=font)
+
+
 
             # Add footer
             footer = Image.open(os.path.dirname(os.path.realpath(__file__))+"/static/img/footer.png")
             img.paste(footer, (0, image_height-116))
 
-        #"""
+            # add borders
+            img.draw.line((0, category_color_line_width+branding_height, image_width, category_color_line_width+branding_height),
+                          fill=(204, 204, 204, 255), width=2)
+            img.draw.line(
+                (0, image_height-117, image_width, image_height-117),
+                fill=(204, 204, 204, 255), width=2)
 
         img_io = StringIO()
         img.save(img_io, format="png")

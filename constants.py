@@ -29,8 +29,9 @@ category_colors = {
 
 platform_settings = {
     "twitter": {
-        "font_size": 30,
-        "additional_line_spacing": 5,
+        "font_size": 29,
+        "additional_line_spacing_he": 5,
+        "additional_line_spacing_en": -10,
         "image_width": 506,
         "image_height": 253,
         "margin": 20,
@@ -39,8 +40,9 @@ platform_settings = {
         "branding_height": 0
     },
     "facebook": {
-        "font_size": 76,
-        "additional_line_spacing": 12,
+        "font_size": 70,
+        "additional_line_spacing_he": 12,
+        "additional_line_spacing_en": -20,
         "image_width": 1200,
         "image_height": 630,
         "margin": 40,
@@ -52,7 +54,8 @@ platform_settings = {
 
     "instagram": {
         "font_size": 70,
-        "additional_line_spacing": 10,
+        "additional_line_spacing_he": 12,
+        "additional_line_spacing_en": 0,
         "image_width": 1040,
         "image_height": 1040,
         "margin": 40,
