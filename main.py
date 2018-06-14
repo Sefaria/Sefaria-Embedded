@@ -26,6 +26,11 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+@app.errorhandler(500)
+def internal_service_error(e):
+    return send_from_directory(os.path.join(app.root_path, 'static/img'),
+                               'fb-og-image.png', mimetype='image/png')
+
 @app.route("/<resource>")
 def root(resource):
     route = request.args.get('route')

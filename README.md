@@ -6,3 +6,7 @@ A Google App Engine App that provides an embedding interface for the Sefaria web
 * English and Hebrew interface in the embedded page allows for multi-language viewing with super low resource usage
 * Generates social media images for various platforms
 
+### Installation
+- Clone repo
+- `cd sefaria-embedded`
+- `pip install -t ./sefaria-embedded/lib -r requirements.txt`
