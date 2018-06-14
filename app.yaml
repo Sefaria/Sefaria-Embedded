@@ -56,9 +56,9 @@ skip_files:
     - lib/Jinja2*
     - lib/markupsafe*
     - lib/MarkupSafe*
-    - lib/PIL*
     - lib/pillow*
     - lib/werkzeug*
     - lib/Werkzeug*
     - venv/*
+    - lib/PIL*
 

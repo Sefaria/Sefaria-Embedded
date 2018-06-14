@@ -76,13 +76,13 @@ def root(resource):
         if lang == "he":
             img.write_text_box((margin, -font_size * .5 +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
                                font_size=font_size, color=text_color,
-                               place='justify', RTL=True, additional_line_spacing=additional_line_spacing)
+                               place='justify', RTL=True, additional_line_spacing=additional_line_spacing, image_height=image_height)
 
 
         else:
             img.write_text_box((margin, -font_size +branding_height), text, box_width=image_width - 2 * margin, font_filename=font_file,
                                font_size=font_size, color=text_color,
-                               place='justify', RTL=False, additional_line_spacing=additional_line_spacing)
+                               place='justify', RTL=False, additional_line_spacing=additional_line_spacing, image_height=image_height)
 
         img.draw.line((0, category_color_line_width/2, image_width, category_color_line_width/2), fill=category_color_line_color, width=category_color_line_width)
 
