@@ -36,6 +36,9 @@ def root(resource):
     route = request.args.get('route')
     lang = request.args.get('lang')
 
+    if lang != "he":
+        lang = "en"
+
     result = get_resource(resource)
 
     if route == "embed":
@@ -125,14 +128,9 @@ def get_resource(resource):
 
 def remote_get_resource(resource_name):
     """Issues a GET request to fetch resource and returns dictionary of the relevant data"""
-    url = urljoin(SEFARIA_API_NODE, resource_name.replace(" ","%20"))
-    params = dict(
-        commentary=0,
-        context=0
-    )
-
+    url = urljoin(SEFARIA_API_NODE, resource_name.replace(" ","%20")) + "?commentary=0&context=0"
     try:
-        result = urlfetch.fetch(url, headers=params)
+        result = urlfetch.fetch(url)
         if result.status_code == 200:
             full_json = json.loads(result.content)
 
