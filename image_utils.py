@@ -75,7 +75,7 @@ class ImageText(object):
 
     def write_text_box(self, (x, y), text, box_width, font_filename,
                        font_size=11, color=(0, 0, 0), place='left',
-                       justify_last_line=False, RTL=False, additional_line_spacing=0):
+                       justify_last_line=False, RTL=False, additional_line_spacing=0, image_height=0):
         lines = []
         line = []
         words = reversed(text.split()) if RTL is True else text.split()
@@ -94,46 +94,47 @@ class ImageText(object):
         height = y
         for index, line in enumerate(lines):
             height += text_height + additional_line_spacing
-            if place == 'left':
-                self.write_text((x, height), line, font_filename, font_size,
-                                color)
-            elif place == 'right':
-                total_size = self.get_text_size(font_filename, font_size, line)
-                x_left = x + box_width - total_size[0]
-                self.write_text((x_left, height), line, font_filename,
-                                font_size, color)
-            elif place == 'center':
-                total_size = self.get_text_size(font_filename, font_size, line)
-                x_left = int(x + ((box_width - total_size[0]) / 2))
-                self.write_text((x_left, height), line, font_filename,
-                                font_size, color)
-            elif place == 'justify':
-                words = line.split()
-                if (index == len(lines) - 1 and not justify_last_line) or \
-                                len(words) == 1:
-                    if RTL is True:
-                        total_size = self.get_text_size(font_filename, font_size, line)
-                        x_left = x + box_width - total_size[0]
-                        self.write_text((x_left, height), line, font_filename,
-                                        font_size, color)
-                    else:
-                        self.write_text((x, height), line, font_filename, font_size,
-                                        color)
-                    continue
-                line_without_spaces = ''.join(words)
-                total_size = self.get_text_size(font_filename, font_size,
-                                                line_without_spaces)
-                space_width = (box_width - total_size[0]) / (len(words) - 1.0)
-                start_x = x
-                for word in words[:-1]:
-                    self.write_text((start_x, height), word, font_filename,
+            if height + text_height < image_height:
+                if place == 'left':
+                    self.write_text((x, height), line, font_filename, font_size,
+                                    color)
+                elif place == 'right':
+                    total_size = self.get_text_size(font_filename, font_size, line)
+                    x_left = x + box_width - total_size[0]
+                    self.write_text((x_left, height), line, font_filename,
                                     font_size, color)
-                    word_size = self.get_text_size(font_filename, font_size,
-                                                   word)
-                    start_x += word_size[0] + space_width
-                last_word_size = self.get_text_size(font_filename, font_size,
-                                                    words[-1])
-                last_word_x = x + box_width - last_word_size[0]
-                self.write_text((last_word_x, height), words[-1], font_filename,
-                                font_size, color)
+                elif place == 'center':
+                    total_size = self.get_text_size(font_filename, font_size, line)
+                    x_left = int(x + ((box_width - total_size[0]) / 2))
+                    self.write_text((x_left, height), line, font_filename,
+                                    font_size, color)
+                elif place == 'justify':
+                    words = line.split()
+                    if (index == len(lines) - 1 and not justify_last_line) or \
+                                    len(words) == 1:
+                        if RTL is True:
+                            total_size = self.get_text_size(font_filename, font_size, line)
+                            x_left = x + box_width - total_size[0]
+                            self.write_text((x_left, height), line, font_filename,
+                                            font_size, color)
+                        else:
+                            self.write_text((x, height), line, font_filename, font_size,
+                                            color)
+                        continue
+                    line_without_spaces = ''.join(words)
+                    total_size = self.get_text_size(font_filename, font_size,
+                                                    line_without_spaces)
+                    space_width = (box_width - total_size[0]) / (len(words) - 1.0)
+                    start_x = x
+                    for word in words[:-1]:
+                        self.write_text((start_x, height), word, font_filename,
+                                        font_size, color)
+                        word_size = self.get_text_size(font_filename, font_size,
+                                                       word)
+                        start_x += word_size[0] + space_width
+                    last_word_size = self.get_text_size(font_filename, font_size,
+                                                        words[-1])
+                    last_word_x = x + box_width - last_word_size[0]
+                    self.write_text((last_word_x, height), words[-1], font_filename,
+                                    font_size, color)
         return (box_width, height - y)
