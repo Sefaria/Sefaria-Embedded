@@ -10,3 +10,4 @@ A Google App Engine App that provides an embedding interface for the Sefaria web
 - Clone repo
 - `cd sefaria-embedded`
 - `pip install -t ./sefaria-embedded/lib -r requirements.txt`
+- To deploy to cloud: `gcloud app deploy app.yaml`
