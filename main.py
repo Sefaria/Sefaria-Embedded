@@ -67,6 +67,7 @@ def root(resource):
 
         text = result["HebrewText"] if lang == "he" else result["EnglishText"]
         title = result["HebrewSectionReference"] if lang == "he" else result["EnglishSectionReference"]
+        title = smart_truncate(title, length=30, suffix="...")
 
         text = ' '.join(text)
 
@@ -191,6 +192,7 @@ def smart_truncate(content, length=180, suffix='...'):
 
 def cleanup_and_format_text(text, language):
 #removes html tags, nikkudot and taamim. Applies BIDI algorithm to text so that letters aren't reversed in PIL.
+    text = text.replace('<br>', ' ')
     cleanr = re.compile('<.*?>')
     text = re.sub(cleanr, '', text)
     text = text.replace(u"\u05BE", " ")  #replace hebrew dash with ascii
